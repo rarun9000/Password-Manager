@@ -15,9 +15,9 @@ public class Main {
             try {
                 int ch = print.menuPrinterAndSelectionReturner("*Password Manager*", menu, true);
                 switch (ch) {
-                    // case 1:
-                    //     new Login();
-                    //     break;
+                    case 1:
+                        new Login();
+                        break;
                     case 2:
                         new Registration();
                         break;
