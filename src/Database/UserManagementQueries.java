@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import Management.UserManagement;
+
 /**
  *
  * @author rarun
@@ -110,6 +112,12 @@ public class UserManagementQueries extends Sql {
             System.out.println("getOrganization error");
         }
         return "";
+    }
+    public int removeMultipleUsers(ArrayList<String[]> users){
+        String user = new UserManagement().ArrayListToStringQuery(users);
+        String query  = "delete from users where user_id in "+user;
+        System.out.println(query);
+        return updateQuery(query);
     }
     public String getUserType(String username) {
         String query = "select account_type from "+tableName+" where user_id = ? ";

@@ -68,7 +68,7 @@ public class Menu {
                 break;
             }
             case 3: {
-                userManager.removeUser();
+                userManager.removeMultipleUsers();
                 break;
             }
             case 4: {
@@ -76,7 +76,7 @@ public class Menu {
                 break;
             }
             case 5: {
-                userManager.inviteUser();
+                userManager.inviteMultipleUsers();
                 break;
             }
             case 6: {

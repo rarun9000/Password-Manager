@@ -77,24 +77,27 @@ public class MenuHandler {
         System.out.println(formatString(head, max_length));
     }
 
-    public int menuPrinterAndSelectionReturner(String title, int indx, String[] list, boolean printlist) {
+    public int menuPrinterAndSelectionReturner(String title1, int indx, String[] list, boolean printlist) {
         if (printlist) {
             maxLengthInList(list);
             printList(list);
         }
         s = new Scanner(System.in);
-        if (title == null)
+        String title = "";
+        if (title1 == null)
             title = "Enter your choice";
         else
-            title = "Select " + title;
+            title = "Select " + title1;
 
         while (true) {
             System.out.println(title + ((indx != -1) ? indx : "") + "\t:  ");
             String choice = s.nextLine();
             choice = choice.trim().toLowerCase();
-            if (title != null && choice.isEmpty()) {
-                return -1;
+            if (title1 != null && choice.isEmpty()) {
+                   return -1;
             }
+           
+
             if (!hasOnlyNumbers(choice)) {
                 System.out.println("Selected option must be a Digit.");
                 this.doYouWantToReturnToPreviousMenu();
@@ -108,7 +111,6 @@ public class MenuHandler {
             }
 
             int res = Integer.parseInt(choice);
-
             if (res > list.length || res <= 0) {
                 System.out.println("Invalid option. Option must be from the above list.");
                 this.doYouWantToReturnToPreviousMenu();
@@ -221,7 +223,7 @@ public class MenuHandler {
                 && (str.matches("^[0-9]*$")));
     }
 
-    public static ArrayList<String> selectMultipleFromList(String title, String[] List) {
+    public static ArrayList<String> selectMultipleOptionsFromList(String title, String[] List) {
         ArrayList<String> res = new ArrayList<>();
         HashSet<Integer> options = new HashSet<>();
         MenuHandler mh = new MenuHandler();
@@ -233,39 +235,36 @@ public class MenuHandler {
                 System.out.println("Select the list of" + title
                         + ".\nLeave the input empty and press enter to end the input process.");
             }
-            try {
-                int option = mh.menuPrinterAndSelectionReturner(title, start, List, false);
-                if (option == -1) {
-                    if (res.isEmpty()) {
-                        System.out.println("No selections found");
-                        if (mh.doYouWantTo("select again")) {
-                            continue;
-                        } else {
-                            break;
-                        }
-                    } else {
-                        if (mh.doYouWantTo("select more " + title)) {
-                            continue;
-                        } else {
-                            break;
-                        }
-                    }
-                }
-                if (options.contains(option)) {
-                    System.out.println("Option already selected");
+            int option = mh.menuPrinterAndSelectionReturner(title, start, List, false);
+            if (option == -1) {
+                if (res.isEmpty()) {
+                    System.out.println("No selections found");
                     if (mh.doYouWantTo("select again")) {
+                        continue;
+                    } else {
+                        throw new RuntimeException("back to previous menu");
+                    }
+                } else {
+                    if (mh.doYouWantTo("select more " + title)) {
                         continue;
                     } else {
                         break;
                     }
                 }
-                res.add(option + "");
-                options.add(option);
-                start++;
-                continue;
-            } catch (RuntimeException e) {
-                break;
             }
+            if (options.contains(option)) {
+                System.out.println("Option already selected");
+                if (mh.doYouWantTo("select again")) {
+                    continue;
+                } else {
+                    break;
+                }
+            }
+            res.add(option + "");
+            options.add(option);
+            start++;
+            continue;
+
         }
         return res;
     }

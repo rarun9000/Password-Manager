@@ -51,23 +51,23 @@ public class UserManagement {
                 m.doYouWantToReturnToPreviousMenu();
                 continue;
             }
-            return new String[]{id, Db.getUserType(id)};
+            return new String[] { id, Db.getUserType(id) };
         }
     }
 
     public void cancelAllInvitesFromTheUser(String user_id) {
-        //Remove all invites from the user
+        // Remove all invites from the user
         Db.cancelAllInvitesFromTheUser(user_id);
     }
 
     public void removePasswordsCreatedAndSharedByUser(String user_id) {
 
         PasswordManagementQueries Db = new PasswordManagementQueries();
-        //First revoke access of all passwords shared by the user
+        // First revoke access of all passwords shared by the user
         Db.revokeAccessOfAllAcccountsSharedByTheUser(user_id);
-        //revoke access of all passwords shared to the user
+        // revoke access of all passwords shared to the user
         Db.revokeAccessOfAllAccountsSharedToTheUser(user_id);
-        //Delete all password created by the user
+        // Delete all password created by the user
         Db.deleteAccountsCreatedByTheUser(user_id);
     }
 
@@ -99,13 +99,14 @@ public class UserManagement {
                     }
                 }
 
-                if (!new MenuHandler().doYouWantTo("remove " + selected_user.toUpperCase() + " from your organization")) {
+                if (!new MenuHandler()
+                        .doYouWantTo("remove " + selected_user.toUpperCase() + " from your organization")) {
                     System.out.println("Removal operation cancelled.");
                     return;
                 }
 
-               // this.cancelAllInvitesFromTheUser(selected_user);
-               // this.removePasswordsCreatedAndSharedByUser(selected_user);
+                // this.cancelAllInvitesFromTheUser(selected_user);
+                // this.removePasswordsCreatedAndSharedByUser(selected_user);
 
                 int stat = Db.removeUserQuery(selected_user);
                 if (stat != -1) {
@@ -118,6 +119,32 @@ public class UserManagement {
             }
         } catch (RuntimeException e) {
         }
+    }
+
+    public void removeMultipleUsers() {
+        try {
+            ReadVerifyUserCredentials readUser = new ReadVerifyUserCredentials();
+            ArrayList<String[]> users = readUser.readVerifyMultipleUsername("remove", "user");
+            int stat = Db.removeMultipleUsers(users);
+            if (stat != -1) {
+                System.out.println("user(s) removed successfully");
+            } else {
+                System.out.println("Removal operation failed");
+            }
+        } catch (Exception e) {
+        }
+    }
+
+    public String ArrayListToStringQuery(ArrayList<String[]> users) {
+        String query = "(";
+        for (String[] user : users) {
+            query += "'" + user[0] + "'";
+            if (!(users.indexOf(user) == users.size() - 1)) {
+                query += " , ";
+            }
+        }
+        query += ")";
+        return query;
     }
 
     public void printListOfUsers(ArrayList<String> list) {
@@ -134,12 +161,12 @@ public class UserManagement {
             ArrayList<String[]> myInvites = getMyPendingInvites();
             String[] myinvites = formatInvites(myInvites, true);
             System.out.println("Select the invite which you want to cancel");
-            int choice = menu.menuPrinterAndSelectionReturner(this.getHeaderForPrintingInvites(),myinvites, true);
-            if(choice-1 == myInvites.size())
+            int choice = menu.menuPrinterAndSelectionReturner(this.getHeaderForPrintingInvites(), myinvites, true);
+            if (choice - 1 == myInvites.size())
                 return;
             String code = myInvites.get(choice - 1)[2];
             Db.cancelInvite(code);
-            System.out.println("Invite to "+myInvites.get(choice-1)[0].toUpperCase()+" cancelled successfully");
+            System.out.println("Invite to " + myInvites.get(choice - 1)[0].toUpperCase() + " cancelled successfully");
         } catch (RuntimeException e) {
         }
     }
@@ -149,18 +176,19 @@ public class UserManagement {
     }
 
     public String[] formatInvites(ArrayList<String[]> myInvites, boolean enableSelection) {
-        int size  = myInvites.size();
-        if(enableSelection)
+        int size = myInvites.size();
+        if (enableSelection)
             size += 1;
         String[] myinvites = new String[size];
         // invitee, invited_on,link,user_type
         for (int i = 0; i < myInvites.size(); i++) {
             String[] temp = myInvites.get(i);
-            String print = formatString(temp[0]) + "|" + formatString(temp[1]) + "|" + formatString(temp[2]) + "|" + formatString(temp[3]);
+            String print = formatString(temp[0]) + "|" + formatString(temp[1]) + "|" + formatString(temp[2]) + "|"
+                    + formatString(temp[3]);
             myinvites[i] = print;
         }
-        if(enableSelection){
-            myinvites[size-1] = "Return to Previous Menu";
+        if (enableSelection) {
+            myinvites[size - 1] = "Return to Previous Menu";
         }
         return myinvites;
     }
@@ -184,20 +212,21 @@ public class UserManagement {
     }
 
     public String getHeaderForPrintingInvites() {
-        return "   " + formatString("Invitee ID") + "|" + formatString("Invited On") + "|" + formatString("Invite Code") + "|" + formatString("Invited As");
+        return "   " + formatString("Invitee ID") + "|" + formatString("Invited On") + "|" + formatString("Invite Code")
+                + "|" + formatString("Invited As");
     }
 
     private String formatString(String str) {
         int len = str.length();
         int space = 1;
 
-        //Leading space Generator
+        // Leading space Generator
         int middle = (30 - len) / 2;
         while (space++ < middle) {
             str = " " + str;
         }
         space += len;
-        //Trailing space Generator
+        // Trailing space Generator
         while (space++ <= 30) {
             str = str + " ";
         }
@@ -215,7 +244,7 @@ public class UserManagement {
         printListOfUsers(list);
     }
 
-    private int getCurrentUserType() {
+    public int getCurrentUserType() {
         int type = 1;
 
         if (user_type.equals("superadmin")) {
@@ -269,11 +298,26 @@ public class UserManagement {
                 return;
             }
             String new_user_type = ruc.readVerifyUserType(getCurrentUserType());
-            String invite_link = inviteLinkGenerator();
+            String invite_link = inviteLinkGenerator(new_user_id);
             Db.inviteUser(new_user_id, new_user_type, invite_link);
             System.out.println("Generated invitation code: " + invite_link);
             System.out.println("Invitation successful");
 
+        } catch (Exception e) {
+        }
+    }
+
+    public void inviteMultipleUsers() {
+        try {
+            ArrayList<String[]> invitees = ruc.readVerifyMultipleUsername("invite", "invitee");
+            for (String[] invitee : invitees) {
+                String username = invitee[0];
+                String userType = invitee[1];
+                String invite_link = inviteLinkGenerator(username);
+                Db.inviteUser(username, userType, invite_link);
+                System.out.println("Generated invitation code: " + invite_link);
+                System.out.println("Invitation to " + username + " successful");
+            }
         } catch (Exception e) {
         }
     }
@@ -283,11 +327,11 @@ public class UserManagement {
         return (char) ch;
     }
 
-    private String inviteLinkGenerator() {
+    private String inviteLinkGenerator(String invitee) {
         String admin = uo.getUserId();
         SimpleDateFormat formatter = new SimpleDateFormat("ddMMyyyyHHmmss");
         Date date = new Date();
-        String out = admin + formatter.format(date);
+        String out = admin + formatter.format(date)+invitee;
         String link = "";
         for (int i = 0; i < out.length(); i++) {
             link += randomCharacterGenerator(out.charAt(i));
