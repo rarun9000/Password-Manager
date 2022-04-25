@@ -20,7 +20,7 @@ public class UserManagementQueries extends Sql {
 
     UsersObject temp_object = UsersObject.getInstance();
     String org = temp_object.getOrganization();
-
+    String tableName = "users";
     /* List of Functions
         1. UpdateLastLogin()
         2. InviteUser()
@@ -94,12 +94,12 @@ public class UserManagementQueries extends Sql {
     }
 
     public int removeUserQuery(String user) {
-        String query = "delete from users where user_id= ? and organization = ?";
+        String query = "delete from "+tableName+" where user_id= ? and organization = ?";
         return updateQuery(query,new String[]{user, org});
     }
     
     public String getOrganizationOfUser(String user_id){
-        String query = "select organization from users where user_id = ? ";
+        String query = "select organization from "+tableName+" where user_id = ? ";
         try{
             ResultSet rs = executeQuery(query, new String[]{user_id});
             if(rs.next()){
@@ -112,7 +112,7 @@ public class UserManagementQueries extends Sql {
         return "";
     }
     public String getUserType(String username) {
-        String query = "select account_type from users where user_id = ? ";
+        String query = "select account_type from "+tableName+" where user_id = ? ";
         ResultSet rs = executeQuery(query, new String[]{username});
         try {
             if (rs.next()) {
@@ -124,7 +124,7 @@ public class UserManagementQueries extends Sql {
         return "";
     }
     public String getLastLoginOfUser(String username){
-        String query = "select last_login from users where user_id = ? ";
+        String query = "select last_login from "+tableName+" where user_id = ? ";
         ResultSet rs = executeQuery(query, new String[]{username});
         try {
             if (rs.next()) {
@@ -158,7 +158,7 @@ public class UserManagementQueries extends Sql {
         return false;
     }
     public ArrayList<String> getListOfUsersQuery() {
-        String query = "select user_id, account_type from users where organization = ? ";
+        String query = "select user_id, account_type from "+tableName+" where organization = ? ";
         String condition = " order by case when account_type ='superadmin' then 1 when account_type='admin' then 2 when account_type='user' then 3 end asc";
         query += condition;
         ArrayList<String> users = new ArrayList<>();

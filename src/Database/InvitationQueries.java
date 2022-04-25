@@ -22,9 +22,11 @@ public class InvitationQueries extends Sql {
         3. UpdateInvitation()
         4. getOrganization()
     */
+    String table_name = "invites";
+
     public boolean verifyInviteLink(String link) {
         try {
-            String query = "select * from invites where link = ?";            
+            String query = "select * from "+table_name+" where link = ?";            
             ResultSet rs = executeQuery(query, new String[]{link});
             if (rs.next()) {
                 return true;
@@ -39,7 +41,7 @@ public class InvitationQueries extends Sql {
         String[] result = new String[4];
         //invited_by, invited_to , type, organization
         try {
-            String query = "select * from invites where link = ?";
+            String query = "select * from "+table_name+" where link = ?";
             ResultSet rs = executeQuery(query,new String[]{link});
             if (rs.next()) {
                 result[0] = rs.getString("inviter");
@@ -54,7 +56,7 @@ public class InvitationQueries extends Sql {
     }
     
     public void deleteInvitation(String link){
-        String query = "delete from invites where link = ?";
+        String query = "delete from "+table_name+" where link = ?";
         updateQuery(query,new String[]{link});
     }
     

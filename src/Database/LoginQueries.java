@@ -14,6 +14,7 @@ public class LoginQueries extends Sql{
     public LoginQueries(String user){
         fetchCredentials(user);
     }
+
     /*
         List of functions
             1. GetResultSet()
@@ -21,10 +22,12 @@ public class LoginQueries extends Sql{
             3. getRS()
             4. getHashPass()
     */
+    String tableName= "users";
+
     private boolean isValidUser = false;
     private String hashpass=new String();
     public void fetchCredentials(String user_id){
-        String query = "Select * from users where user_id = ?";
+        String query = "Select * from "+tableName+" where user_id = ?";
         ResultSet rs = executeQuery(query, new String[]{user_id});
         try{
             if(rs.next()){
@@ -44,7 +47,7 @@ public class LoginQueries extends Sql{
     }
     
     public boolean isValidUserId(String user){
-        String query = "Select * from users where user_id = ?";
+        String query = "Select * from "+tableName+" where user_id = ?";
         ResultSet rs = executeQuery(query,new String[]{user});
         try{
             if(rs.next()){                
@@ -58,7 +61,7 @@ public class LoginQueries extends Sql{
     }
     
     public String getHashPass(String user){
-        String query = "Select * from users where user_id = ?";
+        String query = "Select * from "+tableName+" where user_id = ?";
         ResultSet rs = executeQuery(query,new String[]{user});
         try{
             if(rs.next()){                

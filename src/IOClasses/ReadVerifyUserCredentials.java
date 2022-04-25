@@ -61,7 +61,6 @@ public class ReadVerifyUserCredentials {
             return uname;
         }
     }
-
     public String readVerifyPassword() {
         sc = new Scanner(System.in);
         System.out.println();

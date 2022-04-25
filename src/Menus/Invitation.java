@@ -34,8 +34,9 @@ public class Invitation {
         System.out.println("Enter the invitation Link: ");
         scan = new Scanner(System.in);
         while (true) {
-            String invite_link = scan.nextLine();
+            String invite_link = scan.nextLine().trim();
             if (!iq.verifyInviteLink(invite_link)) {
+                System.out.println("We couldn't find your invite link.");
                 menuio.doYouWantToReturnToPreviousMenu();
                 continue;
             }

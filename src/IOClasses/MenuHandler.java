@@ -8,6 +8,7 @@ package IOClasses;
 import Users.UsersObject;
 import static java.lang.Math.max;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Scanner;
 
 /**
@@ -42,13 +43,13 @@ public class MenuHandler {
     private String formatString(String str, int t_space) {
         int len = str.length();
         int space = 1;
-        //Leading space Generator
+        // Leading space Generator
         int middle = (t_space - len) / 2;
         while (space++ < middle) {
             str = " " + str;
         }
         space += len;
-        //Trailing space Generator
+        // Trailing space Generator
         while (space++ <= t_space) {
             str = str + " ";
         }
@@ -76,32 +77,36 @@ public class MenuHandler {
         System.out.println(formatString(head, max_length));
     }
 
-    public int menuPrinterAndSelectionReturner(String[] list, boolean printlist) {
+    public int menuPrinterAndSelectionReturner(String title, int indx, String[] list, boolean printlist) {
         if (printlist) {
             maxLengthInList(list);
             printList(list);
         }
         s = new Scanner(System.in);
+        if (title == null)
+            title = "Enter your choice";
+        else
+            title = "Select " + title;
 
         while (true) {
-            //First value -> 1 if the selected option is valid -1 if the selected option is invalid
-            //Second Value -> The selected option number
-            System.out.println("Enter your choice\t:  ");
+            System.out.println(title + ((indx != -1) ? indx : "") + "\t:  ");
             String choice = s.nextLine();
             choice = choice.trim().toLowerCase();
-            
+            if (title != null && choice.isEmpty()) {
+                return -1;
+            }
             if (!hasOnlyNumbers(choice)) {
                 System.out.println("Selected option must be a Digit.");
                 this.doYouWantToReturnToPreviousMenu();
                 continue;
             }
-            
+
             if (choice.length() > 2) {
                 System.out.println("Invalid option. Option must be from the above list.");
                 this.doYouWantToReturnToPreviousMenu();
                 continue;
             }
-            
+
             int res = Integer.parseInt(choice);
 
             if (res > list.length || res <= 0) {
@@ -111,6 +116,10 @@ public class MenuHandler {
             }
             return res;
         }
+    }
+
+    public int menuPrinterAndSelectionReturner(String[] list, boolean printlist) {
+        return menuPrinterAndSelectionReturner(null, -1, list, printlist);
     }
 
     public int menuPrinterAndSelectionReturner(String heading, String[] list, boolean printlist) {
@@ -148,7 +157,7 @@ public class MenuHandler {
         String user_type = "*** " + type + "'s Menu ***";
         String user_name = "Current User : " + userid;
 
-        String[] list = new String[]{last_login_details, user_type, user_name};
+        String[] list = new String[] { last_login_details, user_type, user_name };
         this.maxLengthInList(list);
         last_login_details = this.formatString(last_login_details, max_length);
         user_type = this.formatString(user_type, max_length);
@@ -212,4 +221,52 @@ public class MenuHandler {
                 && (str.matches("^[0-9]*$")));
     }
 
+    public static ArrayList<String> selectMultipleFromList(String title, String[] List) {
+        ArrayList<String> res = new ArrayList<>();
+        HashSet<Integer> options = new HashSet<>();
+        MenuHandler mh = new MenuHandler();
+        boolean b = true;
+        int start = 1;
+        while (true) {
+            if (b) {
+                b = false;
+                System.out.println("Select the list of" + title
+                        + ".\nLeave the input empty and press enter to end the input process.");
+            }
+            try {
+                int option = mh.menuPrinterAndSelectionReturner(title, start, List, false);
+                if (option == -1) {
+                    if (res.isEmpty()) {
+                        System.out.println("No selections found");
+                        if (mh.doYouWantTo("select again")) {
+                            continue;
+                        } else {
+                            break;
+                        }
+                    } else {
+                        if (mh.doYouWantTo("select more " + title)) {
+                            continue;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                if (options.contains(option)) {
+                    System.out.println("Option already selected");
+                    if (mh.doYouWantTo("select again")) {
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                res.add(option + "");
+                options.add(option);
+                start++;
+                continue;
+            } catch (RuntimeException e) {
+                break;
+            }
+        }
+        return res;
+    }
 }

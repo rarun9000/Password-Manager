@@ -17,10 +17,11 @@ public class RegistrationQueries extends Sql {
         1. AddOrganization()
         2. isValidOrganization()
     */
+    String tableName = "users";
 
     public int addOrganization(String username, String password, String org_name) {
         while (true) {
-            String query = "insert into users values(?,?,?,?,?)";
+            String query = "insert into "+tableName+" values(?,?,?,?,?)";
             
             int stat = updateQuery(query, new String[]{username, password.hashCode()+"", "superadmin",null,org_name});
             if (stat == -1) {
@@ -33,7 +34,7 @@ public class RegistrationQueries extends Sql {
     }
 
     public boolean isValidOrganization(String org_name) {
-        String query = "select * from users where organization= ?";
+        String query = "select * from "+tableName+" where organization= ?";
         ResultSet rs = executeQuery(query,new String[]{org_name} );
         try {
             if (rs.next()) {
