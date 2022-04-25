@@ -119,6 +119,9 @@ public class MenuHandler {
             return res;
         }
     }
+    public int menuPrinterAndSelectionReturner(String title, int indx ,ArrayList<String> list, boolean printlist) {
+        return menuPrinterAndSelectionReturner(title, indx , arrayListToStringArrayConverter(list), printlist);
+    }
 
     public int menuPrinterAndSelectionReturner(String[] list, boolean printlist) {
         return menuPrinterAndSelectionReturner(null, -1, list, printlist);
