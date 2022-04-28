@@ -15,7 +15,7 @@ public class Sql {
 
     private static Connection conn;
     private Statement st;
-    private String database="passwordmanager";
+    private String database="dev";
     private PreparedStatement ps;
 
     Sql() {

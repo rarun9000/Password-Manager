@@ -24,7 +24,7 @@ public class RSA
         byte[] encrypt = rsa.encrypt(pass, user2_key.getPublicKey());
         
         System.out.println("Encrpted: "+new String(encrypt,StandardCharsets.UTF_8));
-        System.out.println("Decrpted: "+rsa.decrypt( new String(encrypt,StandardCharsets.UTF_8), user2_key.getPrivateKey()));
+     //   System.out.println("Decrpted: "+rsa.decrypt( new String(encrypt,StandardCharsets.UTF_8), user2_key.getPrivateKey()));
         
         }
         catch(Exception e){

@@ -7,6 +7,7 @@ package Management;
 
 import Database.PasswordManagementQueries;
 import Database.UserManagementQueries;
+import Encryption.*;
 import Users.UsersObject;
 import IOClasses.*;
 import Menus.Login;
@@ -19,15 +20,15 @@ import java.util.*;
 public class PasswordManagement {
 
     /*
-            ----Admin & Super Admin options---
-            1. Add Password Account
-            2. Modify Password Account
-            3. Delete Password Account
-            4. List Passwords Shared By Me
-            5. List Passwords Shared To Me
-            ----------User only options-------
-            6. List All Passwords.
-            7. Return To Main Menu
+     * ----Admin & Super Admin options---
+     * 1. Add Password Account
+     * 2. Modify Password Account
+     * 3. Delete Password Account
+     * 4. List Passwords Shared By Me
+     * 5. List Passwords Shared To Me
+     * ----------User only options-------
+     * 6. List All Passwords.
+     * 7. Return To Main Menu
      */
     UsersObject uo = UsersObject.getInstance();
     String current_user = uo.getUserId();
@@ -44,25 +45,30 @@ public class PasswordManagement {
         try {
             String res_id = uniqueIDGenerator();
             String account_name = account.readVerifyAccountName();
-            String url = account.readUrl();
             String username = account.readUsername();
             String password = account.readPassword();
-            Db.addPassword(account_name, username, url, password, res_id);
+            String key = uniqueIDGenerator();
+           // System.out.println(" Key: "+key);
+            String encryptedPassword = AES.encrypt(password, key);
+            String encryptedKey = RSAUtil.getEncryptedString(key, uo.getPublicKey());
+
+            Db.addPassword(account_name, username, encryptedPassword, res_id, encryptedKey);
             System.out.println("Account Added Successfully");
         } catch (RuntimeException e) {
         }
     }
 
     public void listAllPasswords() {
-        //retrieve account passwords created by the current user
-        // ListAllPasswords -> Accounts Created by me  + Accounts shared to me
+        // retrieve account passwords created by the current user
+        // ListAllPasswords -> Accounts Created by me + Accounts shared to me
 
         ArrayList<String[]> all_accounts = new ArrayList<>();
-        //name, url, username, password        
 
+        // accountName,username,encryptedPassword,resId
         ArrayList<String[]> accounts_created_by_me = Db.getAccountDetailsCreatedByMe();
         all_accounts.addAll(accounts_created_by_me);
 
+        // accountName,username,encryptedPassword,resId,owner
         ArrayList<String[]> accounts_shared_to_me = Db.getSharedToMeAccountDetails();
         all_accounts.addAll(accounts_shared_to_me);
 
@@ -70,18 +76,20 @@ public class PasswordManagement {
     }
 
     public void listPasswordsCreatedByMe() {
+        // accountName,username,encryptedPassword,resId,encryptedKey
         ArrayList<String[]> accounts_created_by_me = Db.getAccountDetailsCreatedByMe();
         this.printSelectViewAccountDetails(accounts_created_by_me, false);
     }
 
     public void listPasswordsSharedToMe() {
+        // accountName,username,encryptedPassword,resId,encryptedKey,owner
         ArrayList<String[]> accounts_shared_to_me = Db.getSharedToMeAccountDetails();
         this.printSelectViewAccountDetails(accounts_shared_to_me, true);
     }
 
     public void listPasswordsSharedByMe() {
         ArrayList<String[]> accounts_shared_by_me = Db.getSharedByMeAccountDetails();
-//name,url,username,password,s.res_id,owner
+        // accountName,username,encryptedPassword,resId,encryptedKey
         if (accounts_shared_by_me.isEmpty()) {
             System.out.println("******No Account Passwords Found******");
             return;
@@ -115,7 +123,7 @@ public class PasswordManagement {
         try {
             MenuHandler mh = new MenuHandler();
 
-            String[] menu = new String[]{"View Password", "View list of sharee", "Return to Previous Menu"};
+            String[] menu = new String[] { "View Password", "View list of sharee", "Return to Previous Menu" };
             int ch = mh.menuPrinterAndSelectionReturner(menu, true);
             while (true) {
 
@@ -124,20 +132,24 @@ public class PasswordManagement {
                 }
                 if (ch == 2) {
                     while (true) {
-                        ArrayList<String> sharee = Db.listOfShareeOfAnAccount(accounts.get(choice - 1)[4]);
+                        ArrayList<String> sharee = Db.listOfShareeOfAnAccount(accounts.get(choice - 1)[3]);
                         if (sharee.isEmpty()) {
                             System.out.println("Account Not shared with anyone");
                             return;
                         }
-                        //mh.printList(mh.arrayListToStringArrayConverter(sharee));
+                        // mh.printList(mh.arrayListToStringArrayConverter(sharee));
                         sharee.add("Skip");
-                        System.out.println("Select sharee to revoke access for '" + accounts.get(choice - 1)[0].toUpperCase() + "' or press " + sharee.size() + " to skip");
-                        int choice2 = mh.menuPrinterAndSelectionReturner(mh.arrayListToStringArrayConverter(sharee), true);
+                        System.out.println(
+                                "Select sharee to revoke access for '" + accounts.get(choice - 1)[0].toUpperCase()
+                                        + "' or press " + sharee.size() + " to skip");
+                        int choice2 = mh.menuPrinterAndSelectionReturner(mh.arrayListToStringArrayConverter(sharee),
+                                true);
                         if (!sharee.get(choice2 - 1).equals("Skip")) {
                             String sharee_id = sharee.get(choice2 - 1);
-                            String res_id = accounts.get(choice - 1)[4];
+                            String res_id = accounts.get(choice - 1)[3];
                             Db.revokeAccessOfAccountToUser(res_id, sharee_id);
-                            System.out.println("Access to " + accounts.get(choice - 1)[0] + " revoked from user" + sharee_id);
+                            System.out.println(
+                                    "Access to " + accounts.get(choice - 1)[0] + " revoked from user" + sharee_id);
 
                             if (mh.doYouWantTo("revoke access to another sharee")) {
                                 continue;
@@ -147,7 +159,19 @@ public class PasswordManagement {
                     }
                 }
                 if (ch == 1) {
-                    System.out.println("Username : " + accounts.get(choice - 1)[2] + "\tPassword : " + accounts.get(choice - 1)[3]);
+                    String encryptedPassword = accounts.get(choice - 1)[2];
+                    String encryptedKey = accounts.get(choice - 1)[4];
+
+                    String decryptedKey = "";
+                    try {
+                        decryptedKey = RSAUtil.decrypt(encryptedKey, uo.getPrivateKey());
+                    } catch (Exception e) {
+                    }
+
+                    String decryptedPassword = AES.decrypt(encryptedPassword, decryptedKey);
+
+                    System.out.println(
+                            "Username : " + accounts.get(choice - 1)[1] + "\tPassword : " + decryptedPassword);
                 }
 
                 if (!mh.doYouWantTo("select any other option")) {
@@ -162,6 +186,8 @@ public class PasswordManagement {
     }
 
     public void printSelectViewAccountDetails(ArrayList<String[]> all_accounts, boolean withsharer) {
+        // accountName,username,encryptedPassword,resId,encryptedKey
+
         if (all_accounts.isEmpty()) {
             System.out.println("******No Account Passwords Found******");
             return;
@@ -181,9 +207,21 @@ public class PasswordManagement {
             if (choice - 1 == all_accounts.size()) {
                 return;
             }
-            //all or sharedtome and created by me -> same functio
-            //sharedbyme -> list of users i shared with and option to revoke access to a user
-            System.out.println("Username : " + all_accounts.get(choice - 1)[2] + "\tPassword : " + all_accounts.get(choice - 1)[3]);
+            // all or sharedtome and created by me -> same functio
+            // sharedbyme -> list of users i shared with and option to revoke access to a
+            // user
+            String encryptedPassword = all_accounts.get(choice - 1)[2];
+            String encryptedKey = all_accounts.get(choice - 1)[4];
+
+            String decryptedKey = "";
+            try {
+                decryptedKey = RSAUtil.decrypt(encryptedKey, uo.getPrivateKey());
+            } catch (Exception e) {
+            }
+
+            String decryptedPassword = AES.decrypt(encryptedPassword, decryptedKey);
+
+            System.out.println("Username : " + all_accounts.get(choice - 1)[1] + "\tPassword : " + decryptedPassword);
             if (!menuH.doYouWantTo("view another account password")) {
                 break;
             }
@@ -194,56 +232,52 @@ public class PasswordManagement {
 
     private String[] addOnlyAccountDetails(ArrayList<String[]> account_details, boolean withsharer) {
         String[] accounts = new String[account_details.size() + 1];
+        // accountName,username,encryptedPassword,resId,encryptedKey
         int indx = 0;
         for (; indx < account_details.size(); indx++) {
             String name = account_details.get(indx)[0];
-            String url = account_details.get(indx)[1].trim();
-            String username = account_details.get(indx)[2];
+            String username = account_details.get(indx)[1];
             if (!withsharer) {
-                accounts[indx] = accountDetailsFormatter(name, url, username);
+                accounts[indx] = accountDetailsFormatter(name, username);
             } else {
                 String sharer = account_details.get(indx)[5];
-                accounts[indx] = accountDetailsFormatter(name, url, username, sharer);
+                accounts[indx] = accountDetailsFormatter(name, username, sharer);
             }
         }
         accounts[indx] = formatString("Return to previous menu");
         return accounts;
     }
 
-    private String accountDetailsFormatter(String name, String url, String username) {
-        name = formatString(name);
-        if (url.length() == 0) {
-            url = "Url Not Specified";
-        }
-        url = formatString(url);
+    private String accountDetailsFormatter(String accountName, String username) {
+        accountName = formatString(accountName);
+
         username = formatString(username);
-        String concat = name + "|" + url + "|" + username + "|" + formatString("**********");
+        String concat = accountName + "|" + username + "|" + formatString("**********");
         return concat;
     }
 
-    private String accountDetailsFormatter(String name, String url, String username, String sharer) {
+    private String accountDetailsFormatter(String name, String username, String sharer) {
         name = formatString(name);
-        if (url.length() == 0) {
-            url = "Url Not Specified";
-        }
-        url = formatString(url);
+
         username = formatString(username);
-        String concat = name + "|" + url + "|" + username + "|" + formatString("**********") + "|" + formatString(sharer);
+        String concat = name + "|" + username + "|" + formatString("**********") + "|" + formatString(sharer);
         return concat;
     }
 
     private String getAccountDetailsPrinterHeader(boolean withSharer) {
         if (!withSharer) {
-            return "   " + formatString("Account Name") + "|" + formatString("URL") + "|" + formatString("Username") + "|" + formatString("Password");
+            return "   " + formatString("Account Name") + "|" + formatString("Username") + "|"
+                    + formatString("Password");
         }
-        return "   " + formatString("Account Name") + "|" + formatString("URL") + "|" + formatString("Username") + "|" + formatString("Password") + "|" + formatString("Shared By");
+        return "   " + formatString("Account Name") + "|" + formatString("Username") + "|" + formatString("Password")
+                + "|" + formatString("Shared By");
     }
 
     public void modifyAccount() {
-        //update details of password account
+        // update details of password account
         while (true) {
             ArrayList<String[]> accounts_created_by_me = Db.getAccountDetailsCreatedByMe();
-            //name,url,username,password,res_id
+            // name,url,username,password,res_id
             MenuHandler menuH = new MenuHandler();
             if (accounts_created_by_me.isEmpty()) {
                 System.out.println("******No Account Passwords Found******");
@@ -263,12 +297,12 @@ public class PasswordManagement {
                 String res_id = accounts_created_by_me.get(choice - 1)[4];
 
                 ReadAccountDetailsForUpdate readDetails = new ReadAccountDetailsForUpdate();
-                //get update
+                // get update
                 String newAccountName = readDetails.readNewAccountName(currentAccountName);
                 String newUrl = readDetails.readNewUrl();
                 String newUsername = readDetails.readNewUsername();
                 String newPassword = readDetails.readNewPassword();
-                //check if changed
+                // check if changed
 
                 boolean checkIfNameChanged = !(newAccountName == null); // TRUE -> YES
                 boolean checkIfUrlChanged = !(newUrl == null);
@@ -292,8 +326,8 @@ public class PasswordManagement {
     }
 
     public void sharePassword() {
-        //select the account whose password should be shared
-        //select the user with whom the password should be shared
+        // select the account whose password should be shared
+        // select the user with whom the password should be shared
 
         ArrayList<String[]> accounts_created_by_me = Db.getAccountDetailsCreatedByMe();
         if (accounts_created_by_me.isEmpty()) {
@@ -302,7 +336,8 @@ public class PasswordManagement {
         }
 
         System.out.println("Select the account which you want to share.");
-        String header = "   " + formatString("Account Name") + "|" + formatString("URL") + "|" + formatString("Username") + "|" + formatString("Password");
+        String header = "   " + formatString("Account Name") + "|" + formatString("Username") + "|"
+                + formatString("Password");
         String[] accounts = addOnlyAccountDetails(accounts_created_by_me, false);
         int choice = menuH.menuPrinterAndSelectionReturner(header, accounts, true);
 
@@ -310,7 +345,7 @@ public class PasswordManagement {
             return;
         }
 
-        //get sharee username -- use readUser function from login
+        // get sharee username -- use readUser function from login
         try {
             Login login = new Login("ResuseFunction");
             String sharee = "";
@@ -321,10 +356,10 @@ public class PasswordManagement {
                     menuH.doYouWantToReturnToPreviousMenu();
                     continue;
                 }
-                //check if both sharee and sharer belong to same organization
-                //use getOrganization methof from usermanagementqueries class
+                // check if both sharee and sharer belong to same organization
+                // use getOrganization methof from usermanagementqueries class
                 UserManagementQueries umq = new UserManagementQueries();
-                String sharee_org = umq.getOrganizationOfUser(sharee);
+                String sharee_org = umq.getOrganizationIdOfUser(sharee);
                 if (uo.getOrganization().equals(sharee_org) == false) {
                     System.out.println("User Not Found.");
                     menuH.doYouWantToReturnToPreviousMenu();
@@ -332,15 +367,28 @@ public class PasswordManagement {
                 }
                 break;
             }
+            // accountName,username,encryptedPassword,resId,encryptedKey
 
-            String res_id = accounts_created_by_me.get(choice - 1)[4];
-            //check if already shared
+            String res_id = accounts_created_by_me.get(choice - 1)[3];
+
+            // check if already shared
             if (Db.checkIfAlreadyShared(sharee, res_id)) {
                 System.out.println("Account already shared with " + sharee);
                 return;
             }
 
-            Db.shareAccount(sharee, res_id);
+            String encryptedKey = accounts_created_by_me.get(choice - 1)[4];
+            String decryptedKey = "";
+            try {
+                decryptedKey = RSAUtil.decrypt(encryptedKey, uo.getPrivateKey());
+            } catch (Exception e) {
+                System.out.println("Sharing error: " + e);
+            }
+
+            String shareePublicKey = new UserManagementQueries().getPublicKey(sharee);
+            String encryptedKeyForSharee = RSAUtil.getEncryptedString(decryptedKey, shareePublicKey);
+            System.out.println("Shared Encrypted Key: "+ encryptedKeyForSharee);
+            Db.shareAccount(sharee, res_id, encryptedKeyForSharee);
             System.out.println("Account successfully shared");
         } catch (RuntimeException e) {
         }
@@ -348,12 +396,12 @@ public class PasswordManagement {
 
     public void deleteAccount() {
         ArrayList<String[]> all_accounts = Db.getAccountDetailsCreatedByMe();
-        //first revoke access to this account for all other users;
+        // first revoke access to this account for all other users;
         if (all_accounts.isEmpty()) {
             System.out.println("**No Account Passwords Found**");
         }
         String[] accounts = this.addOnlyAccountDetails(all_accounts, false);
-        //name,url,username,password,res_id
+        // name,url,username,password,res_id
         String header = this.getAccountDetailsPrinterHeader(false);
         MenuHandler menuH = new MenuHandler();
         System.out.println("Select the account which you want to deleted");
@@ -362,10 +410,10 @@ public class PasswordManagement {
             if (choice - 1 == all_accounts.size()) {
                 return;
             }
-            String res_id = all_accounts.get(choice - 1)[4];
-            //first revoke access to this account for all other users;
-            //Db.revokeAccessOfThisAccountToAllOtherUsers(res_id);
-            //now remove this account from accounts table
+            String res_id = all_accounts.get(choice - 1)[3];
+            // first revoke access to this account for all other users;
+            // Db.revokeAccessOfThisAccountToAllOtherUsers(res_id);
+            // now remove this account from accounts table
             Db.deleteAccount(res_id);
         } catch (RuntimeException e) {
         }
@@ -375,15 +423,16 @@ public class PasswordManagement {
     private String formatString(String str) {
         int len = str.length();
         int space = 1;
+        int total = 30;
 
-        //Leading space Generator
-        int middle = (30 - len) / 2;
+        // Leading space Generator
+        int middle = (total - len) / 2;
         while (space++ < middle) {
             str = " " + str;
         }
         space += len;
-        //Trailing space Generator
-        while (space++ <= 30) {
+        // Trailing space Generator
+        while (space++ <= total) {
             str = str + " ";
         }
         return str;

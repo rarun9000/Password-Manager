@@ -14,18 +14,15 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class AES {
 	// Class private variables
-	private static  String SECRET_KEY=  "my_super_secret_key_ho_ho_ho";
 	
 	private static  String SALT = "ssshhhhhhhhhhh!!!!";
-        static void setSecretKey(String key){
-            SECRET_KEY = key;
-        }
+
         static void setSalt(String salt){
             SALT = salt;
         }
         
 	// This method use to encrypt to string
-	public static String encrypt(String strToEncrypt)
+	public static String encrypt(String strToEncrypt, String SECRET_KEY)
 	{
 		try {
 
@@ -55,7 +52,7 @@ public class AES {
 	}
 
 	// This method use to decrypt to string
-	public static String decrypt(String strToDecrypt)
+	public static String decrypt(String strToDecrypt, String SECRET_KEY)
 	{
 		try {
 
@@ -86,24 +83,24 @@ public class AES {
 	}
 }
 
-// driver code
-class Main {
-	public static void main(String[] args)
-	{
-		// Create String variables
-		String originalString = "GeeksforGeeks";
+// // driver code
+// class Main {
+// 	public static void main(String[] args)
+// 	{
+// 		// Create String variables
+// 		String originalString = "GeeksforGeeks";
 		
-		// Call encryption method
-		String encryptedString
-			= AES.encrypt(originalString);
+// 		// Call encryption method
+// 		String encryptedString
+// 			= AES.encrypt(originalString, "1@ssword");
 		
-		// Call decryption method
-		String decryptedString
-			= AES.decrypt(encryptedString);
+// 		// Call decryption method
+// 		String decryptedString
+// 			= AES.decrypt(encryptedString, "1@ssword");
 
-		// Print all strings
-		System.out.println(originalString);
-		System.out.println(encryptedString);
-		System.out.println(decryptedString);
-	}
-}
+// 		// Print all strings
+// 		System.out.println(originalString);
+// 		System.out.println(encryptedString);
+// 		System.out.println(decryptedString);
+// 	}
+// }

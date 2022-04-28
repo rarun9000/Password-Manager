@@ -1,6 +1,5 @@
 package Encryption;
 
-import java.nio.charset.StandardCharsets;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -15,9 +14,9 @@ import java.util.Base64;
 
 public class RSAUtil {
 
-    public  PublicKey getPublicKey(String base64PublicKey){
+    public static PublicKey getPublicKey(String base64PublicKey) {
         PublicKey publicKey = null;
-        try{
+        try {
             X509EncodedKeySpec keySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(base64PublicKey.getBytes()));
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             publicKey = keyFactory.generatePublic(keySpec);
@@ -30,7 +29,7 @@ public class RSAUtil {
         return publicKey;
     }
 
-    public  PrivateKey getPrivateKey(String base64PrivateKey){
+    public static PrivateKey getPrivateKey(String base64PrivateKey) {
         PrivateKey privateKey = null;
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(base64PrivateKey.getBytes()));
         KeyFactory keyFactory = null;
@@ -47,22 +46,48 @@ public class RSAUtil {
         return privateKey;
     }
 
-    public  byte[] encrypt(String data, String publicKey) throws BadPaddingException, IllegalBlockSizeException, InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException {
+    public byte[] encrypt(String data, String publicKey) throws BadPaddingException, IllegalBlockSizeException,
+            InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException {
         Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         cipher.init(Cipher.ENCRYPT_MODE, getPublicKey(publicKey));
         return cipher.doFinal(data.getBytes());
     }
 
-    public  String decrypt(byte[] data, PrivateKey privateKey) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    public static String getEncryptedString(String data, String publicKey)  {
+        try {
+
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, getPublicKey(publicKey));
+            return new String(Base64.getEncoder().encode(cipher.doFinal(data.getBytes())));
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+        return "";
+    }
+
+    public static String decrypt(byte[] data, PrivateKey privateKey) throws NoSuchPaddingException,
+            NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
         return new String(cipher.doFinal(data));
     }
 
-    public  String decrypt(String data, String base64PrivateKey) throws IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException {
-        return decrypt(Base64.getDecoder().decode(data.getBytes(StandardCharsets.UTF_8)), getPrivateKey(base64PrivateKey));
+    public static String decrypt(String data, String base64PrivateKey) throws IllegalBlockSizeException,
+            InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException {
+        // return
+        // decrypt(Base64.getDecoder().decode(data.getBytes(StandardCharsets.UTF_8)),
+        // getPrivateKey(base64PrivateKey));
+        try {
+            return decrypt(Base64.getDecoder().decode(data), getPrivateKey(base64PrivateKey));
+
+        } catch (Exception e) {
+            //TODO: handle exception
+        }
+        return "";
     }
-    public String decrypt(byte[] data, String key) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException{
+
+    public String decrypt(byte[] data, String key) throws NoSuchPaddingException, NoSuchAlgorithmException,
+            InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         PrivateKey ke = getPrivateKey(key);
         return decrypt(data, ke);
     }

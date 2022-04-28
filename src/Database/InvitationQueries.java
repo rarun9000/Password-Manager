@@ -38,7 +38,7 @@ public class InvitationQueries extends Sql {
     }
 
     public String[] getInviteDetails(String link) {
-        String[] result = new String[4];
+        String[] result = new String[5];
         //invited_by, invited_to , type, organization
         try {
             String query = "select * from "+table_name+" where link = ?";
@@ -46,12 +46,14 @@ public class InvitationQueries extends Sql {
             if (rs.next()) {
                 result[0] = rs.getString("inviter");
                 result[1] = rs.getString("invitee");
-                result[2] = rs.getString("user_type");                
+                result[2] = rs.getString("role");                
             }
         } catch (SQLException ex) {
             Logger.getLogger(InvitationQueries.class.getName()).log(Level.SEVERE, null, ex);
         }
-        result[3] = getOrganization(result[0]);
+        String[] org = getOrganization(result[0]);
+        result[3] = org[0];
+        result[4] = org[1];
         return result;
     }
     
@@ -60,17 +62,19 @@ public class InvitationQueries extends Sql {
         updateQuery(query,new String[]{link});
     }
     
-    public String getOrganization(String user_id) {
-        String query = "select * from users where user_id = ? ";
-        String org = "";
+    public String[] getOrganization(String user_id) {
+        String query = "select orgName, o.orgId from user_details u , organization_details o where user_id = ? and u.orgId = o.orgId";
+        String[] orgDetails = new String[2];
         try {
             ResultSet rs = executeQuery(query,new String[]{user_id});
             if (rs.next()) {
-                org = rs.getString("organization");
+                orgDetails[0] = rs.getString("orgName");
+                orgDetails[1] = rs.getString("orgId");
+
             }
         } catch (Exception e) {
             System.out.println("Error in finding organization");
         }
-        return org;
+        return orgDetails;
     }
 }

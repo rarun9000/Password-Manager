@@ -5,7 +5,10 @@
  */
 package Database;
 
-import java.sql.ResultSet;
+
+import Encryption.AES;
+import Encryption.RSAKeyPairGenerator;
+import Management.PasswordManagement;
 
 /**
  *
@@ -13,36 +16,56 @@ import java.sql.ResultSet;
  */
 public class RegistrationQueries extends Sql {
     /*
-    List of functions
-        1. AddOrganization()
-        2. isValidOrganization()
-    */
+     * List of functions
+     * 1. AddOrganization()
+     * 2. isValidOrganization()
+     */
     String tableName = "users";
+    String orgTable = "organization_details";
 
-    public int addOrganization(String username, String password, String org_name) {
-        while (true) {
-            String query = "insert into "+tableName+" values(?,?,?,?,?)";
-            
-            int stat = updateQuery(query, new String[]{username, password.hashCode()+"", "superadmin",null,org_name});
-            if (stat == -1) {
-                System.out.println("Registration Unsuccessful! Try Again");
-                continue;
-            }
-            System.out.println("Registration Successful!");
-            return 1;
+    public String addOrganizationAndUser(String username, String password, String org_name) {
+        String orgId = new PasswordManagement().uniqueIDGenerator();
+        if (createOrganization(org_name, orgId) == 0 || createUser(username, null , "superadmin", org_name, password) == 0) {
+            deleteOrganization(orgId);
+            System.out.println("Registration UnSuccessful!");
+            throw new RuntimeException("Reistration Failed");
         }
+        System.out.println("Registration Successful!");
+        return orgId;
     }
 
-    public boolean isValidOrganization(String org_name) {
-        String query = "select * from "+tableName+" where organization= ?";
-        ResultSet rs = executeQuery(query,new String[]{org_name} );
-        try {
-            if (rs.next()) {
-                return true;
-            }
-        } catch (Exception e) {
-            System.out.println("Error ee: " + e);
-        }
-        return false;
+    
+    public int createUser(String username , String name ,String role, String org_id, String masterPassword){
+        String query = "insert into user_details(user_id ,name, role, orgId) values(?,?,?,?)";
+        int userCreation = updateQuery(query, new String[] { username,name,role, org_id });
+        int credentialsCreation = createCredentials(username, masterPassword);
+        int keyCreation = addKeys(username , masterPassword);
+
+        return (userCreation==1 && credentialsCreation==1 && keyCreation==1) == true ? 1 : 0;
+    }
+
+    public int createCredentials(String username, String password) {
+        String query = "insert into user_credentials(userId, masterPassword) values(?, ?)";
+        return updateQuery(query, new String[] { username, password.hashCode() + "" });
+    }
+
+    public int createOrganization(String orgName, String orgId) {
+        String query = "insert into " + orgTable + "(orgId, orgName) values(?,?)";
+        return updateQuery(query, new String[] { orgId, orgName });
+    }
+
+    public int deleteOrganization(String orgId){
+        String query = "delete from "+orgTable+" where orgId= '"+orgId+"'";
+        return updateQuery(query);
+    }
+
+    public int addKeys(String userId, String masterPassword){
+        RSAKeyPairGenerator gen  = new RSAKeyPairGenerator();
+        String publicK = gen.getPublicKey();
+        String originalPrivatekey = gen.getPrivateKey();
+        String privateK = AES.encrypt( originalPrivatekey , masterPassword)  ;
+    
+        String query = "insert into user_rsakeys(userId, publicKey, privateKey) values(?, ?, ?)";
+        return updateQuery(query, new String[]{userId, publicK,  privateK});
     }
 }

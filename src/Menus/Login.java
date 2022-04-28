@@ -81,7 +81,7 @@ public class Login {
 
             UserManagementQueries userQueries = new UserManagementQueries();
 
-            String organization = userQueries.getOrganizationOfUser(username);
+            String organization = userQueries.getOrganizationIdOfUser(username);
             String lastlogin = userQueries.getLastLoginOfUser(username);
             String usertype = userQueries.getUserType(username);
 

@@ -22,23 +22,27 @@ public class LoginQueries extends Sql{
             3. getRS()
             4. getHashPass()
     */
-    String tableName= "users";
+    String tableName= "user_credentials";
+    String tableName1= "user_details";
+
 
     private boolean isValidUser = false;
     private String hashpass=new String();
+    
     public void fetchCredentials(String user_id){
-        String query = "Select * from "+tableName+" where user_id = ?";
+        String query = "Select userId, masterPassword from "+tableName1+" ud , "+tableName+" where ud.user_id = ?";
         ResultSet rs = executeQuery(query, new String[]{user_id});
         try{
             if(rs.next()){
                 isValidUser = true;
-                hashpass = rs.getString("master_password");
+                hashpass = rs.getString("masterPassword");
             }
         }
         catch(Exception e){
             System.out.println(e);
         }
     }    
+
     public boolean isValidUser(){
         return isValidUser;
     }
@@ -47,7 +51,7 @@ public class LoginQueries extends Sql{
     }
     
     public boolean isValidUserId(String user){
-        String query = "Select * from "+tableName+" where user_id = ?";
+        String query = "Select * from user_details where user_id = ?";
         ResultSet rs = executeQuery(query,new String[]{user});
         try{
             if(rs.next()){                
@@ -61,11 +65,11 @@ public class LoginQueries extends Sql{
     }
     
     public String getHashPass(String user){
-        String query = "Select * from "+tableName+" where user_id = ?";
+        String query = "Select * from "+tableName+" where userId = ?";
         ResultSet rs = executeQuery(query,new String[]{user});
         try{
             if(rs.next()){                
-                return rs.getString("master_password");
+                return rs.getString("masterPassword");
             }
         }
         catch(Exception e){

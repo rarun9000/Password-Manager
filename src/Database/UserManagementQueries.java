@@ -22,7 +22,7 @@ public class UserManagementQueries extends Sql {
 
     UsersObject temp_object = UsersObject.getInstance();
     String org = temp_object.getOrganization();
-    String tableName = "users";
+    String tableName = "user_details";
     /* List of Functions
         1. UpdateLastLogin()
         2. InviteUser()
@@ -35,9 +35,10 @@ public class UserManagementQueries extends Sql {
      */
     
     public void updateLastLogin() {
-        String query = "update users set last_login = (SELECT CURRENT_TIMESTAMP()) where user_id = ? ";// and organization ='"+org+"'";
+        String query = "update "+tableName+" set last_login = (SELECT CURRENT_TIMESTAMP()) where user_id = ? ";// and organization ='"+org+"'";
         updateQuery(query, new String[]{temp_object.getUserId()});
     }
+
     public void cancelAllPendingInvitesToUser(String user){
         String query = "delete from invites where invitee = ?";
         updateQuery(query, new String[]{user});
@@ -54,13 +55,13 @@ public class UserManagementQueries extends Sql {
         String query ="delete from invites where link = ?";
         updateQuery(query, new String[]{invite_code});
     }
-    public void inviteUser(String new_user_id, String user_type, String link) {
-        String query = "insert into invites(inviter,invitee,link,user_type) values( ? , ? , ? ,?)";
-        updateQuery(query, new String[]{temp_object.getUserId(), new_user_id, link, user_type});
+    public void inviteUser(String new_user_id, String role, String link) {
+        String query = "insert into invites(inviter,invitee,link,role) values( ? , ? , ? ,?)";
+        updateQuery(query, new String[]{temp_object.getUserId(), new_user_id, link, role});
     }
     public ArrayList<String[]> myPendingInvites(){
         ArrayList<String[]> invites = new ArrayList<>();
-        String query = "select invitee, invited_on,link,user_type from invites where inviter = ?";
+        String query = "select invitee, invited_on,link,role from invites where inviter = ?";
         try {
             ResultSet rs = executeQuery(query, new String[]{temp_object.getUserId()});
             while(rs.next()) {
@@ -68,7 +69,7 @@ public class UserManagementQueries extends Sql {
                 invite_data[0] = rs.getString("invitee");
                 invite_data[1] = rs.getString("invited_on");
                 invite_data[2] = rs.getString("link");
-                invite_data[3] = rs.getString("user_type");
+                invite_data[3] = rs.getString("role");
                 invites.add(invite_data);
             }            
         } catch (SQLException ex) {
@@ -96,16 +97,16 @@ public class UserManagementQueries extends Sql {
     }
 
     public int removeUserQuery(String user) {
-        String query = "delete from "+tableName+" where user_id= ? and organization = ?";
+        String query = "delete from "+tableName+" where user_id= ? and orgId = ?";
         return updateQuery(query,new String[]{user, org});
     }
     
-    public String getOrganizationOfUser(String user_id){
-        String query = "select organization from "+tableName+" where user_id = ? ";
+    public String getOrganizationIdOfUser(String user_id){
+        String query = "select od.orgId from organization_details od, user_details ud where user_id = ? and od.orgId = ud.orgId";
         try{
             ResultSet rs = executeQuery(query, new String[]{user_id});
             if(rs.next()){
-                return rs.getString("organization");
+                return rs.getString("orgId");
             }
         }
         catch(Exception e){
@@ -113,18 +114,19 @@ public class UserManagementQueries extends Sql {
         }
         return "";
     }
+
     public int removeMultipleUsers(ArrayList<String[]> users){
         String user = new UserManagement().ArrayListToStringQuery(users);
         String query  = "delete from users where user_id in "+user;
-        System.out.println(query);
         return updateQuery(query);
     }
+
     public String getUserType(String username) {
-        String query = "select account_type from "+tableName+" where user_id = ? ";
+        String query = "select role from "+tableName+" where user_id = ? ";
         ResultSet rs = executeQuery(query, new String[]{username});
         try {
             if (rs.next()) {
-                return rs.getString("account_type");
+                return rs.getString("role");
             }
         } catch (Exception e) {
             System.out.println("Error in fetching  user type");
@@ -143,18 +145,11 @@ public class UserManagementQueries extends Sql {
         }
         return "";
     }
-    public int addUserQuery(String username, String password, String type) {
-        String query = "insert into users(user_id,master_password,account_type,last_login,organization) values( ? , ? , ? ,? ,?)";
-        return updateQuery(query, new String[]{username, password, type, null, org});
-    }
 
-    public int addUserQuery(String username, String password, String type, String org) {
-        String query = "insert into users(user_id,master_password,account_type,last_login,organization) values( ? ,? ,?,?,?)";
-        // accessing from invitation class
-        return updateQuery(query, new String[]{username, password.hashCode()+"", type, null, org});
-    }
+
+
     public boolean checkIfAlreadyInvitedFromCurrentOrganization(String invitee){
-        String query = "select invitee from invites , users u where inviter = u.user_id and u.organization = ? and invitee = ?";
+        String query = "select invitee from invites , user_details u where inviter = u.user_id and u.orgId = ? and invitee = ?";
         ResultSet rs = executeQuery(query, new String[]{org, invitee});
         try {
             if (rs.next()) {
@@ -166,8 +161,8 @@ public class UserManagementQueries extends Sql {
         return false;
     }
     public ArrayList<String> getListOfUsersQuery() {
-        String query = "select user_id, account_type from "+tableName+" where organization = ? ";
-        String condition = " order by case when account_type ='superadmin' then 1 when account_type='admin' then 2 when account_type='user' then 3 end asc";
+        String query = "select user_id, role from "+tableName+" where orgId = ? ";
+        String condition = " order by case when role ='superadmin' then 1 when role='admin' then 2 when role='user' then 3 end asc";
         query += condition;
         ArrayList<String> users = new ArrayList<>();
         try {
@@ -175,7 +170,7 @@ public class UserManagementQueries extends Sql {
             while (rs.next()) {
                 String store[] = new String[2];
                 store[0] = rs.getString("user_id");
-                store[1] = rs.getString("account_type");
+                store[1] = rs.getString("role");
                 String list = store[0] + ((store[0].equals(temp_object.getUserId())) ? "(You)" : "") + " Role: " + store[1];
                 users.add(list);                
             }
@@ -183,5 +178,31 @@ public class UserManagementQueries extends Sql {
             System.out.println("Listing error: " + e);
         }
         return users;
+    }
+
+    public String getPublicKey(String userId){
+        String query = "select publicKey from user_rsakeys where userId = '"+userId+"'";
+        try {
+            ResultSet rs = executeQuery(query);
+            if(rs.next()){
+                return rs.getString("publicKey");
+            }
+        } catch (Exception e) {
+
+        }
+        return null;
+    }
+
+    public String getEncrytpedPrivateKey(String userId){
+        String query = "select privateKey from user_rsakeys where userId = '"+userId+"'";
+        try {
+            ResultSet rs = executeQuery(query);
+            if(rs.next()){
+                return rs.getString("privateKey");
+            }
+        } catch (Exception e) {
+
+        }
+        return null;
     }
 }

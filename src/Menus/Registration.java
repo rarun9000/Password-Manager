@@ -27,9 +27,10 @@ public class Registration {
 
             String org_name = read.readVerifyOrganization();
             ArrayList<String> cred = read.getCredentials();
-            rq.addOrganization(cred.get(0), cred.get(1), org_name);
+            String Id =  rq.addOrganizationAndUser(cred.get(0), cred.get(1), org_name);
             //after registration, move to dashborad
-            String[] data = {cred.get(0), cred.get(1), "superadmin", null, org_name};
+            String[] data = {cred.get(0), cred.get(1), "superadmin", null, Id};
+
             UsersObject.getInstance(data);
             Menu m = new Menu();
             m.printMainMenu();

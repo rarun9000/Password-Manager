@@ -20,40 +20,40 @@ public class PasswordManagementQueries extends Sql {
     String current_user = uo.getUserId();
     
     String tableSharedAccount = "shared_accounts";
-    String tableAccounts = "accounts";
+    String tableAccounts = "password_accounts";
     
-    public int updateAccountDetails(String name, String url, String username, String password, String res_id) {
+    public int updateAccountDetails(String name, String url, String username, String encryptedPassword, String resId) {
         String nameAddon = (name != null) ? "name = ?" : "";
         //add , before url if name is not null
         String urlAddon = ((url != null) ? ((name != null) ? "," : "") + "url = ?" : "");
         //add , before username if name is not null or url is not null
         String usernameAddon = ((username != null) ? ((name != null || url != null) ? "," : "") + "username = ?" : "");
         //add , before username if name is not null or url is not null or username is not null
-        String passwordAddon = ((password != null) ? ((name != null || url != null || username != null) ? "," : "") + "password = ?" : "");
+        String passwordAddon = ((encryptedPassword != null) ? ((name != null || url != null || username != null) ? "," : "") + "encryptedPassword = ?" : "");
 
-        String query = "update "+tableAccounts+" set " + nameAddon + urlAddon + usernameAddon + passwordAddon + " where res_id  = ?";
+        String query = "update "+tableAccounts+" set " + nameAddon + urlAddon + usernameAddon + passwordAddon + " where resId  = ?";
         ArrayList<String> updates = new ArrayList<>();
         if(name != null) updates.add(name);
         if(url != null) updates.add(url);
         if(username != null) updates.add(username);
-        if(password != null) updates.add(password);        
-        updates.add(res_id);
+        if(encryptedPassword != null) updates.add(encryptedPassword);        
+        updates.add(resId);
         return updateQuery(query, new MenuHandler().arrayListToStringArrayConverter(updates));
     }
 
     //[name -> password]
     public int revokeAccessOfAllAcccountsSharedByTheUser(String user) {
-        String query = "delete from "+tableSharedAccount+" where res_id in (select res_id from (select s.res_id from "+tableAccounts+" a,"+tableSharedAccount+" s where a.res_id = s.res_id and owner = ? ) as C)";
+        String query = "delete from "+tableSharedAccount+" where resId in (select resId from (select s.resId from "+tableAccounts+" a,"+tableSharedAccount+" s where a.resId = s.resId and owner = ? ) as C)";
         return updateQuery(query, new String[]{user});
     }
 
-    public void getDetailsOfAllAccountsSharedByMeTo(String res_id, String sharee) {
-       // String query = "select * from "+tableAccounts+" a,"+tableSharedAccount+" s where a.res_id = s.res_id and owner = '" + current_user + "' and sharee='" + sharee + "' and s.res_id='" + res_id + "'";
+    public void getDetailsOfAllAccountsSharedByMeTo(String resId, String sharee) {
+       // String query = "select * from "+tableAccounts+" a,"+tableSharedAccount+" s where a.resId = s.resId and owner = '" + current_user + "' and sharee='" + sharee + "' and s.resId='" + resId + "'";
     }
 
-    public void revokeAccessOfAccountToUser(String res_id, String sharee) {
-        String query = "delete from "+tableSharedAccount+" where res_id = ? and sharee= ?";
-        updateQuery(query, new String[]{res_id, sharee});
+    public void revokeAccessOfAccountToUser(String resId, String sharee) {
+        String query = "delete from "+tableSharedAccount+" where resId = ? and sharee= ?";
+        updateQuery(query, new String[]{resId, sharee});
     }
 
     public int deleteAccountsCreatedByTheUser(String user) {
@@ -61,14 +61,14 @@ public class PasswordManagementQueries extends Sql {
         return updateQuery(query, new String[]{user});
     }
 
-    public int deleteAccount(String res_id) {
-        String query = "delete from "+tableAccounts+" where res_id= ?";
-        return updateQuery(query, new String[]{res_id});
+    public int deleteAccount(String resId) {
+        String query = "delete from "+tableAccounts+" where resId= ?";
+        return updateQuery(query, new String[]{resId});
     }
 
-    public int revokeAccessOfThisAccountToAllOtherUsers(String res_id) {
-        String query = "delete from "+tableSharedAccount+" where res_id= ?";
-        return updateQuery(query, new String[]{res_id});
+    public int revokeAccessOfThisAccountToAllOtherUsers(String resId) {
+        String query = "delete from "+tableSharedAccount+" where resId= ?";
+        return updateQuery(query, new String[]{resId});
     }
 
     public int revokeAccessOfAllAccountsSharedToTheUser(String user) {
@@ -76,11 +76,11 @@ public class PasswordManagementQueries extends Sql {
         return updateQuery(query, new String[]{user});
     }
 
-    public ArrayList<String> listOfShareeOfAnAccount(String res_id) {
+    public ArrayList<String> listOfShareeOfAnAccount(String resId) {
         ArrayList<String> sharee = new ArrayList<>();
         try {
-            String query = "select sharee from "+tableAccounts+" a,"+tableSharedAccount+" s where a.res_id = s.res_id and owner = ? and a.res_id= ? ";
-            ResultSet rs = executeQuery(query, new String[]{current_user, res_id});
+            String query = "select sharee from "+tableAccounts+" a,"+tableSharedAccount+" s where a.resId = s.resId and owner = ? and a.resId= ? ";
+            ResultSet rs = executeQuery(query, new String[]{current_user, resId});
             while (rs.next()) {
                 sharee.add(rs.getString("sharee"));
             }
@@ -93,16 +93,16 @@ public class PasswordManagementQueries extends Sql {
     public ArrayList<String[]> getAccountDetailsCreatedByMe() {
         ArrayList<String[]> account_details = new ArrayList<>();
 
-        String query = "select name,url,username,password,res_id from "+tableAccounts+" where owner= ?";
+        String query = "select accountName,username,encryptedPassword,resId from "+tableAccounts+" where owner= ?";
         ResultSet rs = executeQuery(query, new String[]{current_user});
         try {
             while (rs.next()) {
                 String account_detail[] = new String[5];
-                account_detail[0] = rs.getString("name") + " (C)";
-                account_detail[1] = rs.getString("url");
-                account_detail[2] = rs.getString("username");
-                account_detail[3] = rs.getString("password");
-                account_detail[4] = rs.getString("res_id");
+                account_detail[0] = rs.getString("accountName") + " (C)";
+                account_detail[1] = rs.getString("username");
+                account_detail[2] = rs.getString("encryptedPassword");
+                account_detail[3] = rs.getString("resId");
+                account_detail[4] = getEncryptedKeyOfPasswordAccount(account_detail[3]);
                 account_details.add(account_detail);
             }
         } catch (Exception e) {
@@ -111,17 +111,29 @@ public class PasswordManagementQueries extends Sql {
         return account_details;
     }
 
-    public String[] getAccountDetail(String res_id) {
+    public String getEncryptedKeyOfPasswordAccount(String resId){
+        String query = "select encryptedKey from password_keys where resId='"+resId+"'";
+        try{
+            ResultSet rs = executeQuery(query);
+            if(rs.next()){
+                return rs.getString("encryptedKey");
+            }
+        }
+        catch(Exception e){}
+        return null;
+    }
+
+    public String[] getAccountDetail(String resId) {
         String account_details[] = new String[5];
-        String query = "select * from "+tableAccounts+" where res_id= ?";
-        ResultSet rs = executeQuery(query, new String[]{res_id});
+        String query = "select * from "+tableAccounts+" where resId= ?";
+        ResultSet rs = executeQuery(query, new String[]{resId});
         try {
             if (rs.next()) {
-                account_details[0] = rs.getString("name");
-                account_details[1] = rs.getString("url");
-                account_details[2] = rs.getString("username");
-                account_details[3] = rs.getString("password");
-                account_details[4] = rs.getString("res_id");
+                account_details[0] = rs.getString("accountName");
+                account_details[1] = rs.getString("username");
+                account_details[2] = rs.getString("encryptedPassword");
+                account_details[3] = rs.getString("resId");
+                account_details[4] = rs.getString("encryptedKey");
             }
         } catch (Exception e) {
             System.out.println("Error in fetching account details: " + e);
@@ -131,16 +143,16 @@ public class PasswordManagementQueries extends Sql {
 
     public ArrayList<String[]> getSharedToMeAccountDetails() {
         ArrayList<String[]> account_detail = new ArrayList<>();
-        String query = "select name,url,username,password,s.res_id,owner from "+tableSharedAccount+" s, "+tableAccounts+" a where s.res_id = a.res_id and s.sharee = ?";
+        String query = "select accountName,username,encryptedPassword,s.resId,owner,encryptedKey from "+tableSharedAccount+" s, "+tableAccounts+" a where s.resId = a.resId and sharee = ?";
         ResultSet rs = executeQuery(query, new String[]{current_user});
         try {
             while (rs.next()) {
                 String[] account_details = new String[6];
-                account_details[0] = rs.getString("name") + " (S)";
-                account_details[1] = rs.getString("url");
-                account_details[2] = rs.getString("username");
-                account_details[3] = rs.getString("password");
-                account_details[4] = rs.getString("res_id");
+                account_details[0] = rs.getString("accountname") + " (S)";
+                account_details[1] = rs.getString("username");
+                account_details[2] = rs.getString("encryptedPassword");
+                account_details[3] = rs.getString("resId");
+                account_details[4] = rs.getString("encryptedKey");
                 account_details[5] = rs.getString("owner");
                 account_detail.add(account_details);
             }
@@ -152,18 +164,17 @@ public class PasswordManagementQueries extends Sql {
 
     public ArrayList<String[]> getSharedByMeAccountDetails() {
         ArrayList<String[]> account_details = new ArrayList<>();
-        String query = "select name,url,username,password,s.res_id,owner from "+tableSharedAccount+" s, "+tableAccounts+" a where s.res_id = a.res_id and a.owner= ? ";
+        String query = "select accountName,username,encryptedPassword,s.resId from "+tableSharedAccount+" s, "+tableAccounts+" a where s.resId = a.resId and a.owner= ? ";
 
         ResultSet rs = executeQuery(query, new String[]{current_user});
         try {
             while (rs.next()) {
-                String[] account_detail = new String[6];
-                account_detail[0] = rs.getString("name");
-                account_detail[1] = rs.getString("url");
-                account_detail[2] = rs.getString("username");
-                account_detail[3] = rs.getString("password");
-                account_detail[4] = rs.getString("res_id");
-                account_detail[5] = rs.getString("owner");
+                String[] account_detail = new String[5];
+                account_detail[0] = rs.getString("accountName");
+                account_detail[1] = rs.getString("username");
+                account_detail[2] = rs.getString("encryptedPassword");
+                account_detail[3] = rs.getString("resId");
+                account_detail[4] = this.getEncryptedKeyOfPasswordAccount(account_detail[3]);
                 account_details.add(account_detail);
             }
         } catch (Exception e) {
@@ -173,7 +184,7 @@ public class PasswordManagementQueries extends Sql {
     }
 
     public boolean checkIfAlreadyExists(String account_name) {
-        String query = "select * from "+tableAccounts+" where owner = ? and name = ?";
+        String query = "select * from "+tableAccounts+" where owner = ? and accountName = ?";
         try {
             ResultSet rs = executeQuery(query, new String[]{current_user, account_name});
             if (rs.next()) {
@@ -186,20 +197,26 @@ public class PasswordManagementQueries extends Sql {
         return false;
     }
 
-    public void addPassword(String name, String username, String url, String password, String res_id) {
-        String query = "insert into "+tableAccounts+"(owner,name,url,username,password,res_id) values( ? ,? , ? ,? , ? ,?)";
-        updateQuery(query, new String[]{current_user, name, url, username, password, res_id});
+    public void addPassword(String name, String username, String encryptedPassword, String resId, String encryptedKey) {
+        String query = "insert into "+tableAccounts+"(owner,accountName,username,encryptedPassword,resId) values( ? , ? ,? , ? ,?)";
+        updateQuery(query, new String[]{current_user, name, username, encryptedPassword, resId});
+        addKey(resId, encryptedKey);
     }
 
-    public void shareAccount(String sharee, String res_id) {
-        String query = "insert into "+tableSharedAccount+"(sharee,res_id) values(? ,?)";
-        updateQuery(query, new String[]{sharee, res_id});
+    public void addKey(String resId, String encryptedKey){
+        String query = "insert into password_keys(resId, encryptedKey) values(?,?)";
+        updateQuery(query, new String[]{resId, encryptedKey});
     }
 
-    public boolean checkIfAlreadyShared(String sharee, String res_id) {
-        String query = "Select * from "+tableSharedAccount+" where sharee = ? and res_id = ?";
+    public void shareAccount(String sharee, String resId, String encryptedKey) {
+        String query = "insert into "+tableSharedAccount+"(sharee, resId, encryptedKey) values(? ,?, ?)";
+        updateQuery(query, new String[]{sharee, resId, encryptedKey});
+    }
+
+    public boolean checkIfAlreadyShared(String sharee, String resId) {
+        String query = "Select * from "+tableSharedAccount+" where sharee = ? and resId = ?";
         try {
-            ResultSet rs = executeQuery(query, new String[]{sharee, res_id});
+            ResultSet rs = executeQuery(query, new String[]{sharee, resId});
             if (rs.next()) {
                 return true;
             }

@@ -91,7 +91,7 @@ public class UserManagement {
                 System.out.println("Cannot remove current user.");
                 return;
             }
-            if (Db.getOrganizationOfUser(selected_user).equals(uo.getOrganization())) {
+            if (Db.getOrganizationIdOfUser(selected_user).equals(uo.getOrganization())) {
                 if (type == 2) {
                     if (selected_user_type.equals("superadmin")) {
                         System.out.println("You dont have access to remove the selected user");
@@ -99,8 +99,7 @@ public class UserManagement {
                     }
                 }
 
-                if (!new MenuHandler()
-                        .doYouWantTo("remove " + selected_user.toUpperCase() + " from your organization")) {
+                if (!new MenuHandler().doYouWantTo("remove " + selected_user.toUpperCase() + " from your organization")) {
                     System.out.println("Removal operation cancelled.");
                     return;
                 }
@@ -122,6 +121,7 @@ public class UserManagement {
     }
 
     public void removeMultipleUsers() {
+        listUsers();
         try {
             ReadVerifyUserCredentials readUser = new ReadVerifyUserCredentials();
             ArrayList<String[]> users = readUser.readVerifyMultipleUsername("remove", "user");
@@ -255,36 +255,6 @@ public class UserManagement {
         return type;
     }
 
-    public void addUser() {
-        int type = getCurrentUserType();
-
-        if (type == 1) {
-            System.out.println("Access Denied.");
-            return;
-        }
-
-        try {
-            ArrayList<String> credentials = ruc.getCredentials();
-            if (credentials.isEmpty()) {
-                return;
-            }
-
-            String new_user_type = ruc.readVerifyUserType(type);
-            String pass = credentials.get(1);
-            pass = pass.hashCode() + "";
-
-            int r = Db.addUserQuery(credentials.get(0), pass, new_user_type);
-
-            if (r == -1) {
-                System.out.println("Error in  creating user.");
-            } else {
-                System.out.println("User Created Successfully");
-            }
-
-        } catch (Exception e) {
-            System.out.println("Add user error: " + e);
-        }
-    }
 
     public void inviteUser() {
         try {

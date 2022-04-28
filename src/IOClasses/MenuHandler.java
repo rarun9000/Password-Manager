@@ -58,7 +58,7 @@ public class MenuHandler {
     }
 
     public void maxLengthInList(String[] list) {
-        int maxi = 35;
+        int maxi = 40;
         for (String str : list) {
             maxi = max(maxi, str.length());
         }

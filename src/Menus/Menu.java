@@ -27,6 +27,7 @@ public class Menu {
     void functionFinder(String Operation) {
 
         ArrayList<String> operations = new ArrayList<>();
+
         operations.add("Admin Tools"); //0
         operations.add("Password Management"); //1
         operations.add("Share Password");//2
@@ -41,6 +42,7 @@ public class Menu {
         operations.add("View all passwords");//11
         operations.add("list of pending invites");//12
         operations.add("cancel invite");//13
+        operations.add("manage password accounts");//14
 
         int indx = -1;
         for (int i = 0; i < operations.size(); i++) {
@@ -111,6 +113,10 @@ public class Menu {
                 userManager.cancelInvite();
                 break;
             }
+            case 14:{
+                MenuManager.managePasswordAccounts();
+                break;
+            }
             default: {
                 System.out.println("Operations Not yet Implemented");
                 break;
@@ -128,7 +134,7 @@ public class Menu {
                 int ch = p.menuPrinterAndSelectionReturner(heading, user_menu, true);
 
                 String operation = user_menu.get(ch - 1).toLowerCase();
-                if (operation.equals("logout") || operation.equals("return to main menu")) {
+                if (operation.equals("logout") || operation.equals("return to main menu")||operation.equals("return to previous menu")) {
                     return;
                 }
                 functionFinder(operation);

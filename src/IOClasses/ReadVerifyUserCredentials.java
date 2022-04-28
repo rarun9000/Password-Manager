@@ -6,7 +6,6 @@
 package IOClasses;
 
 import Database.LoginQueries;
-import Database.RegistrationQueries;
 import Database.UserManagementQueries;
 import Management.UserManagement;
 import Users.UsersObject;
@@ -99,14 +98,13 @@ public class ReadVerifyUserCredentials {
                 } else if (type.equals("remove")) {
                     // check if the selected usertype is admin or superadmin
                     int currentUserType = new UserManagement().getCurrentUserType();
-                    String selectedUserType = queries.getUserType(queries.getUserType(uname));
-
+                    String selectedUserType = queries.getUserType(uname);
                     if (uname.equals(uo.getUserId())) {
                         System.out.println("Cannot remove current user.");
                         m.doYouWantToReturnToPreviousMenu();
                         continue;
                     }
-                    if (queries.getOrganizationOfUser(uname).equals(uo.getOrganization())) {
+                    if (queries.getOrganizationIdOfUser(uname).equals(uo.getOrganization())) {
                         if (currentUserType == 2) {
                             if (selectedUserType.equals("superadmin")) {
                                 System.out.println("You dont have access to remove the selected user");
@@ -144,7 +142,7 @@ public class ReadVerifyUserCredentials {
             if (uname == null) {
                 if (res.isEmpty()) {
                     System.out.println("No " + title + " selected");
-                    if (m.doYouWantTo("Enter the list of " + title)) {
+                    if (m.doYouWantTo("re-enter the list of " + title)) {
                         continue;
                     } else {
                         throw new RuntimeException("back to previous menu");
@@ -261,7 +259,6 @@ public class ReadVerifyUserCredentials {
 
     public String readVerifyOrganization() {
         sc = new Scanner(System.in);
-        RegistrationQueries rq = new RegistrationQueries();
         while (true) {
             System.out.println("Enter Organization Name: ");
             String org = sc.nextLine();
@@ -277,12 +274,6 @@ public class ReadVerifyUserCredentials {
             }
             if (org.length() < 4) {
                 System.out.println("Organization name is too short");
-                m.doYouWantToReturnToPreviousMenu();
-                continue;
-            }
-
-            if (rq.isValidOrganization(org)) {
-                System.out.println("Organization with same name already exists.");
                 m.doYouWantToReturnToPreviousMenu();
                 continue;
             }
