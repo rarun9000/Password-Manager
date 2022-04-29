@@ -5,7 +5,6 @@
  */
 package Database;
 
-
 import Encryption.AES;
 import Encryption.RSAKeyPairGenerator;
 import Management.PasswordManagement;
@@ -23,25 +22,23 @@ public class RegistrationQueries extends Sql {
     String tableName = "users";
     String orgTable = "organization_details";
 
-    public String addOrganizationAndUser(String username, String password, String org_name) {
+    public String addOrganization(String org_name) {
         String orgId = new PasswordManagement().uniqueIDGenerator();
-        if (createOrganization(org_name, orgId) == 0 || createUser(username, null , "superadmin", org_name, password) == 0) {
-            deleteOrganization(orgId);
-            System.out.println("Registration UnSuccessful!");
-            throw new RuntimeException("Reistration Failed");
-        }
-        System.out.println("Registration Successful!");
+        // int createorg =createOrganization(org_name, orgId) ;
+        String query = "insert into " + orgTable + "(orgId, orgName) values(?,?)";
+        updateQuery(query, new String[] { orgId, org_name });
         return orgId;
     }
 
-    
-    public int createUser(String username , String name ,String role, String org_id, String masterPassword){
+    public int createUser(String username, String name, String role, String org_id, String masterPassword) {
         String query = "insert into user_details(user_id ,name, role, orgId) values(?,?,?,?)";
-        int userCreation = updateQuery(query, new String[] { username,name,role, org_id });
-        int credentialsCreation = createCredentials(username, masterPassword);
-        int keyCreation = addKeys(username , masterPassword);
+        int userCreation = updateQuery(query, new String[] { username, name, role, org_id });
+        if (userCreation == 1) {
+            createCredentials(username, masterPassword);
+            addKeys(username, masterPassword);
+        }
 
-        return (userCreation==1 && credentialsCreation==1 && keyCreation==1) == true ? 1 : 0;
+        return (userCreation == 1) ? 1 : 0;
     }
 
     public int createCredentials(String username, String password) {
@@ -54,18 +51,18 @@ public class RegistrationQueries extends Sql {
         return updateQuery(query, new String[] { orgId, orgName });
     }
 
-    public int deleteOrganization(String orgId){
-        String query = "delete from "+orgTable+" where orgId= '"+orgId+"'";
+    public int deleteOrganization(String orgId) {
+        String query = "delete from " + orgTable + " where orgId= '" + orgId + "'";
         return updateQuery(query);
     }
 
-    public int addKeys(String userId, String masterPassword){
-        RSAKeyPairGenerator gen  = new RSAKeyPairGenerator();
+    public int addKeys(String userId, String masterPassword) {
+        RSAKeyPairGenerator gen = new RSAKeyPairGenerator();
         String publicK = gen.getPublicKey();
         String originalPrivatekey = gen.getPrivateKey();
-        String privateK = AES.encrypt( originalPrivatekey , masterPassword)  ;
-    
+        String privateK = AES.encrypt(originalPrivatekey, masterPassword);
+
         String query = "insert into user_rsakeys(userId, publicKey, privateKey) values(?, ?, ?)";
-        return updateQuery(query, new String[]{userId, publicK,  privateK});
+        return updateQuery(query, new String[] { userId, publicK, privateK });
     }
 }

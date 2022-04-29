@@ -29,7 +29,10 @@ public class Main {
                         System.exit(0);
                 }
 
-            } catch (Exception e) {}
+            } catch (Exception e) {
+
+            
+            }
         }
 
     }

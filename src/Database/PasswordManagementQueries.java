@@ -6,6 +6,7 @@
 package Database;
 
 import IOClasses.MenuHandler;
+import Management.*;
 import Users.UsersObject;
 import java.sql.ResultSet;
 import java.util.*;
@@ -22,19 +23,16 @@ public class PasswordManagementQueries extends Sql {
     String tableSharedAccount = "shared_accounts";
     String tableAccounts = "password_accounts";
     
-    public int updateAccountDetails(String name, String url, String username, String encryptedPassword, String resId) {
-        String nameAddon = (name != null) ? "name = ?" : "";
-        //add , before url if name is not null
-        String urlAddon = ((url != null) ? ((name != null) ? "," : "") + "url = ?" : "");
-        //add , before username if name is not null or url is not null
-        String usernameAddon = ((username != null) ? ((name != null || url != null) ? "," : "") + "username = ?" : "");
-        //add , before username if name is not null or url is not null or username is not null
-        String passwordAddon = ((encryptedPassword != null) ? ((name != null || url != null || username != null) ? "," : "") + "encryptedPassword = ?" : "");
+    public int updateAccountDetails(String name, String username, String encryptedPassword, String resId) {
+        String nameAddon = (name != null) ? "accountName = ?" : "";
+        //add , before username if name is not null 
+        String usernameAddon = ((username != null) ? ((name != null ) ? "," : "") + "username = ?" : "");
+        //add , before username if name is not null or username is not null
+        String passwordAddon = ((encryptedPassword != null) ? ((name != null  || username != null) ? "," : "") + "encryptedPassword = ?" : "");
 
-        String query = "update "+tableAccounts+" set " + nameAddon + urlAddon + usernameAddon + passwordAddon + " where resId  = ?";
+        String query = "update "+tableAccounts+" set " + nameAddon + usernameAddon + passwordAddon + " where resId  = ?";
         ArrayList<String> updates = new ArrayList<>();
         if(name != null) updates.add(name);
-        if(url != null) updates.add(url);
         if(username != null) updates.add(username);
         if(encryptedPassword != null) updates.add(encryptedPassword);        
         updates.add(resId);
@@ -65,7 +63,10 @@ public class PasswordManagementQueries extends Sql {
         String query = "delete from "+tableAccounts+" where resId= ?";
         return updateQuery(query, new String[]{resId});
     }
-
+    public int deleteAccount(ArrayList<String> accounts) {
+        String query = "delete from "+tableAccounts+" where resId IN " + new PasswordManagement().ArrayListToStringQuery(accounts);
+        return updateQuery(query);
+    }
     public int revokeAccessOfThisAccountToAllOtherUsers(String resId) {
         String query = "delete from "+tableSharedAccount+" where resId= ?";
         return updateQuery(query, new String[]{resId});
@@ -210,6 +211,7 @@ public class PasswordManagementQueries extends Sql {
 
     public void shareAccount(String sharee, String resId, String encryptedKey) {
         String query = "insert into "+tableSharedAccount+"(sharee, resId, encryptedKey) values(? ,?, ?)";
+        System.out.println(query+ sharee+"\t"+resId+"\t"+encryptedKey);
         updateQuery(query, new String[]{sharee, resId, encryptedKey});
     }
 

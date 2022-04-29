@@ -37,7 +37,6 @@ public class UsersObject {
         String publicKey = queries.getPublicKey(user_id);
         String encryptedPrivateKey = queries.getEncrytpedPrivateKey(user_id);
         String privateKey = AES.decrypt(encryptedPrivateKey, master_password);
-        System.out.println("Private Key: "+ privateKey);
         UsersObject.privateKey = privateKey;
         UsersObject.publicKey = publicKey;
     }

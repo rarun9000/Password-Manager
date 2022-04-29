@@ -53,15 +53,11 @@ public class MenuManagement {
 
         TreeMap<Integer, String> menu = new TreeMap<>();
 
-        menu.put(1, "View All Passwords");
-        menu.put(100, "Return to main menu");
-        menu.put(30, "List Passwords Shared By Me");
-        menu.put(20, "List Passwords Shared To Me");
-        // menu.put(40, "Add Password Account");
-        // menu.put(50, "Modify Password Account");
-        // menu.put(60, "Delete Password Account");
-        menu.put(50, "Manage Password Accounts");
-        menu.put(40, "Share Password");
+        menu.put(1, "All Passwords");
+        menu.put(20, "My Passwords");
+        menu.put(30, "Shared Passwords");
+        menu.put(100, "Return to Previous Menu");
+        
         m.flowControl("***Password Management***", menu);
     }
 
@@ -72,5 +68,13 @@ public class MenuManagement {
         menu.put(50, "Modify Password Account");
         menu.put(60, "Delete Password Account");
         m.flowControl("***Manage Password Accounts***", menu);
+    }
+
+    public void sharedAccounts(){
+        TreeMap<Integer, String> menu = new TreeMap<>();
+        menu.put(100, "Return to previous menu");
+        menu.put(40, "Passwords Shared By Me");
+        menu.put(50, "Passwords Shared With Me");
+        m.flowControl("***Shared Accounts***", menu);
     }
 }

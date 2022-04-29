@@ -234,12 +234,12 @@ public class UserManagement {
     }
 
     public void listUsers() {
-        int type = getCurrentUserType();
+        // int type = getCurrentUserType();
 
-        if (type == 1) {
-            System.out.println("Access Denied.");
-            return;
-        }
+        // if (type == 1) {
+        //     System.out.println("Access Denied.");
+        //     return;
+        // }
         ArrayList<String> list = Db.getListOfUsersQuery();
         printListOfUsers(list);
     }

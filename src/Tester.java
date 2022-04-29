@@ -2,6 +2,7 @@
 import java.util.ArrayList;
 
 import IOClasses.ReadVerifyUserCredentials;
+import Management.PasswordManagement;
 import Management.UserManagement;
 import Users.UsersObject;
 
@@ -17,15 +18,8 @@ import Users.UsersObject;
  */
 public class Tester {
     public static void main(String[] args){
-        UsersObject.getInstance(new String[]{"arun","1@ssword","superadmin",null,"zoho"});
-        ReadVerifyUserCredentials obj = new ReadVerifyUserCredentials();  
-        try {
-            ArrayList<String[]> users = obj.readVerifyMultipleUsername("invite", "invitee");
-            System.out.println(new UserManagement().ArrayListToStringQuery(users));
-
-        } catch (Exception e) {
-            System.out.println("Error Thrown");
-        }
+        PasswordManagement m = new PasswordManagement();
+        m.deleteMultipleAccount(3);
     }
     
 }

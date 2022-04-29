@@ -179,7 +179,21 @@ public class UserManagementQueries extends Sql {
         }
         return users;
     }
-
+    public ArrayList<String> getUsernameList(){
+        String query = "select user_id from "+tableName+" where orgId = ? ";
+        String condition = " order by case when role ='superadmin' then 1 when role='admin' then 2 when role='user' then 3 end asc";
+        query += condition;
+        ArrayList<String> users = new ArrayList<>();
+        try {
+            ResultSet rs = executeQuery(query, new String[]{org});
+            while (rs.next()) {
+                users.add(rs.getString("user_id"));                
+            }
+        } catch (Exception e) {
+            System.out.println("Listing error: " + e);
+        }
+        return users;
+    }
     public String getPublicKey(String userId){
         String query = "select publicKey from user_rsakeys where userId = '"+userId+"'";
         try {

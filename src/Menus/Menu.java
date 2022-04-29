@@ -37,13 +37,14 @@ public class Menu {
         operations.add("Add password account");//6
         operations.add("modify password account");//7
         operations.add("delete password account");//8
-        operations.add("list passwords shared by me");//9
-        operations.add("list passwords shared to me");//10
-        operations.add("View all passwords");//11
+        operations.add("passwords shared by me");//9
+        operations.add("passwords shared with me");//10
+        operations.add("all passwords");//11
         operations.add("list of pending invites");//12
         operations.add("cancel invite");//13
         operations.add("manage password accounts");//14
-
+        operations.add("my passwords");//15
+        operations.add("shared passwords");//16
         int indx = -1;
         for (int i = 0; i < operations.size(); i++) {
             if (operations.get(i).toLowerCase().equals(Operation)) {
@@ -115,6 +116,14 @@ public class Menu {
             }
             case 14:{
                 MenuManager.managePasswordAccounts();
+                break;
+            }
+            case 15:{
+                PassManager.myPasswords();
+                break;
+            }
+            case 16:{
+                MenuManager.sharedAccounts();
                 break;
             }
             default: {
